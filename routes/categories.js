@@ -46,9 +46,6 @@ router.get('/categories', auth, async (req, res) => {
   }
 });
 
-// Delete Category
-// Delete Category
-// Delete Category
 router.delete('/categories/:categoryId', auth, async (req, res) => {
   const { categoryId } = req.params;
   try {
@@ -73,19 +70,7 @@ router.delete('/categories/:categoryId', auth, async (req, res) => {
 });
 
 
-// router.delete('/categories/:categoryId', auth, async (req, res) => {
-//   const { categoryId } = req.params;
-//   try {
-//     const user = await User.findById(req.userId);
-//     user.categories.id(categoryId).remove();
-//     await user.save();
-//     res.status(200).json(user.categories);
-//   } catch (err) {
-//     res.status(500).json({ message: 'Server error' });
-//   }
-// });
 
-// Create Item in Category
 router.post('/categories/:categoryId/items', auth, async (req, res) => {
   const { categoryId } = req.params;
   const { itemName } = req.body;
@@ -100,19 +85,7 @@ router.post('/categories/:categoryId/items', auth, async (req, res) => {
   }
 });
 
-// Delete Item from Category
-// router.delete('/categories/:categoryId/items/:itemId', auth, async (req, res) => {
-//   const { categoryId, itemId } = req.params;
-//   try {
-//     const user = await User.findById(req.userId);
-//     const category = user.categories.id(categoryId);
-//     category.items.id(itemId).remove();
-//     await user.save();
-//     res.status(200).json(category.items);
-//   } catch (err) {
-//     res.status(500).json({ message: 'Server error' });
-//   }
-// });
+
 router.delete('/categories/:categoryId/items/:itemId', auth, async (req, res) => { 
   const { categoryId, itemId } = req.params;
 
@@ -134,12 +107,12 @@ router.delete('/categories/:categoryId/items/:itemId', auth, async (req, res) =>
     }
 
     // Remove the item from the category's items array
-    category.items.pull(itemId); // Use pull to remove the item by ID
+    category.items.pull(itemId);
     await user.save();
     
     res.status(200).json({ message: 'Item deleted successfully', items: category.items });
   } catch (err) {
-    console.error('Server error:', err); // Log the error for debugging
+    console.error('Server error:', err); 
     res.status(500).json({ message: 'Server error' });
   }
 });
