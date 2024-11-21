@@ -50,20 +50,19 @@ exports.getBills = async (req, res) => {
 // Function to get sales summary
 exports.getSalesSummary = async (req, res) => {
   try {
-    // Current date
     const today = new Date();
 
     // Define start of day, week, and month
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const startOfWeek = new Date(moment().startOf('isoWeek')); // Monday as the start of the week
-    const startOfMonth = new Date(moment().startOf('month'));
+    const startOfWeek = new Date(moment().startOf('isoWeek')); // Start of the week
+    const startOfMonth = new Date(moment().startOf('month')); // Start of the month
 
     // Aggregate data
     const summary = await Bill.aggregate([
       {
         $match: {
           createdAt: {
-            $gte: startOfMonth, // Only consider bills from the start of the current month
+            $gte: startOfMonth, // Consider bills from the start of the current month
           },
         },
       },
@@ -110,10 +109,15 @@ exports.getSalesSummary = async (req, res) => {
       },
     ]);
 
+    // Handle empty results for facets
+    const todaySummary = summary[0]?.day[0] || { totalSales: 0, totalEarnings: 0 };
+    const weekSummary = summary[0]?.week[0] || { totalSales: 0, totalEarnings: 0 };
+    const monthSummary = summary[0]?.month[0] || { totalSales: 0, totalEarnings: 0 };
+
     res.status(200).json({
-      today: summary.day[0] || { totalSales: 0, totalEarnings: 0 },
-      thisWeek: summary.week[0] || { totalSales: 0, totalEarnings: 0 },
-      thisMonth: summary.month[0] || { totalSales: 0, totalEarnings: 0 },
+      today: todaySummary,
+      thisWeek: weekSummary,
+      thisMonth: monthSummary,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving sales summary', error: error.message });

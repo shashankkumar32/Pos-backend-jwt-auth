@@ -22,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api/bill', billRoutes);
 
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
