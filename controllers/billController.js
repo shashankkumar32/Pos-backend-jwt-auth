@@ -135,27 +135,67 @@ exports.getSalesSummary = async (req, res) => {
 
 
 // Get top ordered items
+// exports.getTopOrderedItems = async (req, res) => {
+//   try {
+//     const topItems = await Bill.aggregate([
+//       { $match: { user: mongoose.Types.ObjectId(req.userId) } },
+//       { $unwind: '$cartItems' },
+//       {
+//         $group: {
+//           _id: '$cartItems.itemName',
+//           totalQuantity: { $sum: '$cartItems.quantity' },
+//         },
+//       },
+//       { $sort: { totalQuantity: -1 } },
+//       { $limit: 10 },
+//     ]);
+
+//     if (!topItems.length) {
+//       return res.status(404).json({ message: 'No top items data found for this user.' });
+//     }
+
+//     res.status(200).json(topItems);
+//   } catch (error) {
+//     res.status(500).json({ message: 'Internal Server Error', error: error.message });
+//   }
+// };
+
+
 exports.getTopOrderedItems = async (req, res) => {
   try {
+    const userId = new mongoose.Types.ObjectId(req.userId); // Create ObjectId for the specific user
+
     const topItems = await Bill.aggregate([
-      { $match: { user: mongoose.Types.ObjectId(req.userId) } },
-      { $unwind: '$cartItems' },
+      // Match bills for the specific user
+      { $match: { user: userId } },
+      
+      // Unwind cartItems to treat each item as a separate document
+      { $unwind: "$cartItems" },
+      
+      // Group by itemName and sum the quantities
       {
         $group: {
-          _id: '$cartItems.itemName',
-          totalQuantity: { $sum: '$cartItems.quantity' },
+          _id: "$cartItems.itemName", // Group by itemName
+          totalQuantity: { $sum: "$cartItems.quantity" }, // Sum the quantities of each item
         },
       },
+      
+      // Sort by totalQuantity in descending order
       { $sort: { totalQuantity: -1 } },
+      
+      // Limit to top 5 items (or change this limit as needed)
       { $limit: 10 },
     ]);
 
+    // If no top items found, return a 404
     if (!topItems.length) {
       return res.status(404).json({ message: 'No top items data found for this user.' });
     }
 
+    // Return the top items in the response
     res.status(200).json(topItems);
   } catch (error) {
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    res.status(500).json({ message: 'Error retrieving top ordered items', error: error.message });
   }
 };
+
