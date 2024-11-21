@@ -123,3 +123,30 @@ exports.getSalesSummary = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving sales summary', error: error.message });
   }
 };
+
+exports.getTopOrderedItems = async (req, res) => {
+  try {
+    const topItems = await Bill.aggregate([
+      // Unwind cartItems to treat each item as a separate document
+      { $unwind: "$cartItems" },
+      
+      // Group by itemName and sum the quantities
+      {
+        $group: {
+          _id: "$cartItems.itemName", // Group by itemName
+          totalQuantity: { $sum: "$cartItems.quantity" },
+        },
+      },
+      
+      // Sort by totalQuantity in descending order
+      { $sort: { totalQuantity: -1 } },
+      
+      // Limit to top 5 items
+      { $limit: 5 },
+    ]);
+
+    res.status(200).json(topItems);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving top ordered items', error: error.message });
+  }
+};
