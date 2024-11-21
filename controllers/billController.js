@@ -49,7 +49,7 @@ exports.getBills = async (req, res) => {
 exports.getSalesSummary = async (req, res) => {
   try {
     const today = new Date();
-    const userId = mongoose.Types.ObjectId(req.userId); // Ensure userId is extracted properly
+    const userId = new mongoose.Types.ObjectId(req.userId); // Use 'new' keyword to create ObjectId
 
     // Define start of day, week, and month
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
