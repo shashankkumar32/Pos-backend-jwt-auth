@@ -153,29 +153,56 @@ exports.getSaleSummary = async (req, res) => {
 };
 
 
+// exports.getTopOrderedItems = async (req, res) => {
+//   try {
+//     const topItems = await Bill.aggregate([
+//       // Unwind cartItems to treat each item as a separate document
+//       { $unwind: "$cartItems" },
+      
+//       // Group by itemName and sum the quantities
+//       {
+//         $group: {
+//           _id: "$cartItems.itemName", // Group by itemName
+//           totalQuantity: { $sum: "$cartItems.quantity" },
+//         },
+//       },
+      
+//       // Sort by totalQuantity in descending order
+//       { $sort: { totalQuantity: -1 } },
+      
+//       // Limit to top 5 items
+//       { $limit: 5 },
+//     ]);
+
+//     res.status(200).json(topItems);
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error retrieving top ordered items', error: error.message });
+//   }
+// };
 exports.getTopOrderedItems = async (req, res) => {
   try {
+    const userId = req.user.id; // Assuming you have middleware to decode JWT and add `user` to `req`
+
     const topItems = await Bill.aggregate([
-      // Unwind cartItems to treat each item as a separate document
-      { $unwind: "$cartItems" },
-      
-      // Group by itemName and sum the quantities
+      { $match: { user: mongoose.Types.ObjectId(userId) } }, // Filter bills by user ID
+      { $unwind: "$cartItems" }, // Flatten the cartItems array
       {
         $group: {
           _id: "$cartItems.itemName", // Group by itemName
-          totalQuantity: { $sum: "$cartItems.quantity" },
+          totalQuantity: { $sum: "$cartItems.quantity" }, // Sum up the quantity
         },
       },
-      
-      // Sort by totalQuantity in descending order
-      { $sort: { totalQuantity: -1 } },
-      
-      // Limit to top 5 items
-      { $limit: 5 },
+      { $sort: { totalQuantity: -1 } }, // Sort by totalQuantity in descending order
+      { $limit: 10 }, // Limit to top 10 items
     ]);
+
+    if (topItems.length === 0) {
+      return res.status(404).json({ message: "No top items data found for this user." });
+    }
 
     res.status(200).json(topItems);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving top ordered items', error: error.message });
+    console.error("Error in getTopOrderedItems:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
