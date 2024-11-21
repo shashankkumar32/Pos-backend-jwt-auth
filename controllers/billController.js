@@ -48,81 +48,110 @@ exports.getBills = async (req, res) => {
 
 
 // Function to get sales summary
-exports.getSalesSummary = async (req, res) => {
+// exports.getSalesSummary = async (req, res) => {
+//   try {
+//     const today = new Date();
+
+//     // Define start of day, week, and month
+//     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+//     const startOfWeek = new Date(moment().startOf('isoWeek')); // Start of the week
+//     const startOfMonth = new Date(moment().startOf('month')); // Start of the month
+
+//     // Aggregate data
+//     const summary = await Bill.aggregate([
+//       {
+//         $match: {
+//           createdAt: {
+//             $gte: startOfMonth, // Consider bills from the start of the current month
+//           },
+//         },
+//       },
+//       {
+//         $facet: {
+//           day: [
+//             {
+//               $match: {
+//                 createdAt: { $gte: startOfDay },
+//               },
+//             },
+//             {
+//               $group: {
+//                 _id: null,
+//                 totalSales: { $sum: 1 },
+//                 totalEarnings: { $sum: { $sum: "$cartItems.totalAmount" } },
+//               },
+//             },
+//           ],
+//           week: [
+//             {
+//               $match: {
+//                 createdAt: { $gte: startOfWeek },
+//               },
+//             },
+//             {
+//               $group: {
+//                 _id: null,
+//                 totalSales: { $sum: 1 },
+//                 totalEarnings: { $sum: { $sum: "$cartItems.totalAmount" } },
+//               },
+//             },
+//           ],
+//           month: [
+//             {
+//               $group: {
+//                 _id: null,
+//                 totalSales: { $sum: 1 },
+//                 totalEarnings: { $sum: { $sum: "$cartItems.totalAmount" } },
+//               },
+//             },
+//           ],
+//         },
+//       },
+//     ]);
+
+//     // Handle empty results for facets
+//     const todaySummary = summary[0]?.day[0] || { totalSales: 0, totalEarnings: 0 };
+//     const weekSummary = summary[0]?.week[0] || { totalSales: 0, totalEarnings: 0 };
+//     const monthSummary = summary[0]?.month[0] || { totalSales: 0, totalEarnings: 0 };
+
+//     res.status(200).json({
+//       today: todaySummary,
+//       thisWeek: weekSummary,
+//       thisMonth: monthSummary,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error retrieving sales summary', error: error.message });
+//   }
+// };
+exports.getSaleSummary = async (req, res) => {
   try {
-    const today = new Date();
+    const userId = req.user.id; // Assuming you have middleware to decode JWT and add `user` to `req`
 
-    // Define start of day, week, and month
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const startOfWeek = new Date(moment().startOf('isoWeek')); // Start of the week
-    const startOfMonth = new Date(moment().startOf('month')); // Start of the month
-
-    // Aggregate data
     const summary = await Bill.aggregate([
+      { $match: { user: mongoose.Types.ObjectId(userId) } }, // Filter bills by user ID
       {
-        $match: {
-          createdAt: {
-            $gte: startOfMonth, // Consider bills from the start of the current month
-          },
-        },
+        $unwind: "$cartItems", // Flatten the cartItems array
       },
       {
-        $facet: {
-          day: [
-            {
-              $match: {
-                createdAt: { $gte: startOfDay },
-              },
-            },
-            {
-              $group: {
-                _id: null,
-                totalSales: { $sum: 1 },
-                totalEarnings: { $sum: { $sum: "$cartItems.totalAmount" } },
-              },
-            },
-          ],
-          week: [
-            {
-              $match: {
-                createdAt: { $gte: startOfWeek },
-              },
-            },
-            {
-              $group: {
-                _id: null,
-                totalSales: { $sum: 1 },
-                totalEarnings: { $sum: { $sum: "$cartItems.totalAmount" } },
-              },
-            },
-          ],
-          month: [
-            {
-              $group: {
-                _id: null,
-                totalSales: { $sum: 1 },
-                totalEarnings: { $sum: { $sum: "$cartItems.totalAmount" } },
-              },
-            },
-          ],
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$cartItems.totalAmount" }, // Sum up all totalAmount
+          totalQuantity: { $sum: "$cartItems.quantity" }, // Sum up all quantities
         },
       },
     ]);
 
-    // Handle empty results for facets
-    const todaySummary = summary[0]?.day[0] || { totalSales: 0, totalEarnings: 0 };
-    const weekSummary = summary[0]?.week[0] || { totalSales: 0, totalEarnings: 0 };
-    const monthSummary = summary[0]?.month[0] || { totalSales: 0, totalEarnings: 0 };
+    if (summary.length === 0) {
+      return res.status(404).json({ message: "No sales data found for this user." });
+    }
 
-    res.status(200).json({
-      today: todaySummary,
-      thisWeek: weekSummary,
-      thisMonth: monthSummary,
-    });
+    res.status(200).json(summary[0]); // Return the aggregated result
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving sales summary', error: error.message });
+    console.error("Error in getSaleSummary:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 exports.getTopOrderedItems = async (req, res) => {
   try {
