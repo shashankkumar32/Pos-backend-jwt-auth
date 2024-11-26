@@ -1,0 +1,39 @@
+# Node modules (if using Node.js)
+node_modules/
+
+# Environment files
+.env
+
+# IDE or editor specific files
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# npm package-lock and yarn.lock
+package-lock.json
+yarn.lock
+
+# Build directories (for front-end frameworks, if any)
+build/
+dist/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# Dependency directories (if any)
+bower_components/
+
+# Generated files (like minified JS, CSS)
+*.min.js
+*.min.css
