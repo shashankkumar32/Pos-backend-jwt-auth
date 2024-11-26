@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login, Fetch Bills, and Categories</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 2em;
+    }
+
+    .section {
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 800px;
+      border: 1px solid #333;
+      border-radius: 10px;
+      background-color: #111;
+    }
+
+    .section h2 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input, button {
+      width: 100%;
+      max-width: 600px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 1em;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background-color: #222;
+      color: #fff;
+    }
+
+    button {
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #444;
+    }
+
+    .description {
+      font-size: 0.9em;
+      color: #bbb;
+      margin-bottom: 10px;
+    }
+
+    .response-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .response-box {
+      flex: 1;
+      min-width: 300px;
+      height: 150px;
+      overflow-y: auto;
+      background-color: #222;
+      padding: 10px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      color: #0f0;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+
+    hr {
+      border: 1px solid #333;
+      margin: 20px 0;
+    }
+
+    @media (max-width: 768px) {
+      .section {
+        max-width: 90%;
+      }
+
+      h1 {
+        font-size: 1.5em;
+      }
+
+      .response-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      input, button {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.2em;
+      }
+
+      .section h2 {
+        font-size: 1.3em;
+      }
+
+      input, button {
+        font-size: 0.9em;
+      }
+
+      .response-box {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>API Dashboard</h1>
+
+  <!-- API URL Section -->
+  <div class="section" id="api-url-section">
+    <h2>API URL</h2>
+    <label for="api-url">API URL:</label>
+    <input type="text" id="api-url" value="https://pos-backend-jwt-auth.onrender.com/api" placeholder="Enter API URL">
+  </div>
+
+  <hr>
+
+  <!-- Register Section -->
+  <div class="section" id="register-section">
+    <h2>Register</h2>
+    <p class="description">Route: <code>/auth/register</code></p>
+    <label for="register-username">Username:</label>
+    <input type="text" id="register-username" placeholder="Enter a username">
+    <label for="register-password">Password:</label>
+    <input type="password" id="register-password" placeholder="Enter a password">
+    <button onclick="handleRegister()">Register</button>
+    <p id="register-message"></p>
+  </div>
+
+  <hr>
+
+  <!-- Login Section -->
+  <div class="section" id="login-section">
+    <h2>Login</h2>
+    <p class="description">Route: <code>/auth/login</code></p>
+    <label for="email">Email:</label>
+    <input type="text" id="email" placeholder="Enter your email">
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Enter your password">
+    <button onclick="handleLogin()">Login</button>
+    <p id="auth-message"></p>
+  </div>
+
+  <hr>
+
+  <!-- Fetch Bills Section -->
+  <div class="section" id="fetch-bills-section">
+    <h2>Fetch Bills</h2>
+    <p class="description">Route: <code>/bill/bills</code></p>
+    <label for="bills-token-input">Access Token:</label>
+    <div class="response-container">
+      <div>
+        <input type="text" id="bills-token-input" placeholder="Enter token">
+        <button onclick="fetchBills()">Fetch Bills</button>
+      </div>
+      <pre id="bills-output" class="response-box"></pre>
+    </div>
+    <p id="fetch-bills-message"></p>
+  </div>
+
+  <hr>
+
+  <!-- Fetch Categories Section -->
+  <div class="section" id="fetch-categories-section">
+    <h2>Fetch Categories</h2>
+    <p class="description">Route: <code>/categories</code></p>
+    <label for="categories-token-input">Access Token:</label>
+    <div class="response-container">
+      <div>
+        <input type="text" id="categories-token-input" placeholder="Enter token">
+        <button onclick="fetchCategories()">Fetch Categories</button>
+      </div>
+      <pre id="categories-output" class="response-box"></pre>
+    </div>
+    <p id="fetch-categories-message"></p>
+  </div>
+
+  <hr>
+
+  <!-- Fetch Bill Summary Section -->
+  <div class="section" id="fetch-summary-section">
+    <h2>Fetch Bill Summary</h2>
+    <p class="description">Route: <code>/bill/bills/summary</code></p>
+    <label for="summary-token-input">Access Token:</label>
+    <div class="response-container">
+      <div>
+        <input type="text" id="summary-token-input" placeholder="Enter token">
+        <button onclick="fetchSummary()">Fetch Summary</button>
+      </div>
+      <pre id="summary-output" class="response-box"></pre>
+    </div>
+    <p id="fetch-summary-message"></p>
+  </div>
+
+  <hr>
+
+  <!-- Fetch Total Items Sold Section -->
+  <div class="section" id="fetch-orders-section">
+    <h2>Fetch Total Items Sold (Quantity-wise)</h2>
+    <p class="description">Route: <code>/bill/bills/orderlist</code></p>
+    <label for="orders-token-input">Access Token:</label>
+    <div class="response-container">
+      <div>
+        <input type="text" id="orders-token-input" placeholder="Enter token">
+        <button onclick="fetchOrders()">Fetch Orders</button>
+      </div>
+      <pre id="orders-output" class="response-box"></pre>
+    </div>
+    <p id="fetch-orders-message"></p>
+  </div>
+
+  <script>
+    // Get the API URL from the input field
+    function getApiUrl() {
+      return document.getElementById("api-url").value;
+    }
+
+    // Handle registration
+    async function handleRegister() {
+      const username = document.getElementById("register-username").value;
+      const password = document.getElementById("register-password").value;
+      const registerMessage = document.getElementById("register-message");
+
+      registerMessage.textContent = "Registering...";
+
+      try {
+        const response = await axios.post(`${getApiUrl()}/auth/register`, { username, password });
+        console.log("Registration successful:", response);
+        registerMessage.textContent = "Registration successful, please log in.";
+      } catch (error) {
+        registerMessage.textContent = "Registration failed!";
+        console.error("Registration error:", error);
+      }
+    }
+
+    // Handle login
+    async function handleLogin() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const authMessage = document.getElementById("auth-message");
+      const tokenInputBills = document.getElementById("bills-token-input");
+      const tokenInputCategories = document.getElementById("categories-token-input");
+      const tokenInputSummary = document.getElementById("summary-token-input");
+      const tokenInputQuantity = document.getElementById("orders-token-input");
+
+      authMessage.textContent = "Logging in...";
+
+      try {
+        const response = await axios.post(`${getApiUrl()}/auth/login`, { username: email, password });
+        const token = response.data.token;
+
+        // Store token in localStorage
+        localStorage.setItem("token", token);
+
+        // Autofill token inputs
+        tokenInputBills.value = token;
+        tokenInputCategories.value = token;
+        tokenInputSummary.value = token;
+        tokenInputQuantity.value = token;
+
+        authMessage.textContent = "Login successful!";
+      } catch (error) {
+        authMessage.textContent = "Login failed!";
+        console.error("Login error:", error);
+      }
+    }
+
+    // Fetch bills
+    async function fetchBills() {
+      const token = document.getElementById("bills-token-input").value;
+      const fetchMessage = document.getElementById("fetch-bills-message");
+      const responseOutput = document.getElementById("bills-output");
+
+      fetchMessage.textContent = "Fetching bills...";
+
+      try {
+        const response = await axios.get(`${getApiUrl()}/bill/bills`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        responseOutput.textContent = JSON.stringify(response.data, null, 2);
+        fetchMessage.textContent = "Bills fetched successfully!";
+      } catch (error) {
+        fetchMessage.textContent = "Failed to fetch bills!";
+        console.error("Error fetching bills:", error);
+      }
+    }
+
+    // Fetch categories
+    async function fetchCategories() {
+      const token = document.getElementById("categories-token-input").value;
+      const fetchMessage = document.getElementById("fetch-categories-message");
+      const responseOutput = document.getElementById("categories-output");
+
+      fetchMessage.textContent = "Fetching categories...";
+
+      try {
+        const response = await axios.get(`${getApiUrl()}/categories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        responseOutput.textContent = JSON.stringify(response.data, null, 2);
+        fetchMessage.textContent = "Categories fetched successfully!";
+      } catch (error) {
+        fetchMessage.textContent = "Failed to fetch categories!";
+        console.error("Error fetching categories:", error);
+      }
+    }
+
+    // Fetch bill summary
+    async function fetchSummary() {
+      const token = document.getElementById("summary-token-input").value;
+      const fetchMessage = document.getElementById("fetch-summary-message");
+      const responseOutput = document.getElementById("summary-output");
+
+      fetchMessage.textContent = "Fetching summary...";
+
+      try {
+        const response = await axios.get(`${getApiUrl()}/bill/bills/summary`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        responseOutput.textContent = JSON.stringify(response.data, null, 2);
+        fetchMessage.textContent = "Summary fetched successfully!";
+      } catch (error) {
+        fetchMessage.textContent = "Failed to fetch summary!";
+        console.error("Error fetching summary:", error);
+      }
+    }
+
+    // Fetch total items sold
+    async function fetchOrders() {
+      const token = document.getElementById("orders-token-input").value;
+      const fetchMessage = document.getElementById("fetch-orders-message");
+      const responseOutput = document.getElementById("orders-output");
+
+      fetchMessage.textContent = "Fetching orders...";
+
+      try {
+        const response = await axios.get(`${getApiUrl()}/bill/bills/orderlist`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        responseOutput.textContent = JSON.stringify(response.data, null, 2);
+        fetchMessage.textContent = "Orders fetched successfully!";
+      } catch (error) {
+        fetchMessage.textContent = "Failed to fetch orders!";
+        console.error("Error fetching orders:", error);
+      }
+    }
+  </script>
+</body>
+</html>
